@@ -66,6 +66,7 @@ terraform.rc
 
 # Buf specific
 .buf/
+buf.lock
 
 # Generated code
 api/jobfit/v1/**/*.go
