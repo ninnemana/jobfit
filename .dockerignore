@@ -1,0 +1,49 @@
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+
+# IDE specific
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Build artifacts
+bin/
+dist/
+coverage.txt
+*.out
+*.test
+
+# Dependency directories
+vendor/
+
+# Debug files
+debug/
+
+# Environment files
+.env
+.env.local
+*.env
+
+# Log files
+*.log
+
+# Terraform specific
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraformrc
+terraform.rc
+
+# Generated code (will be regenerated in container)
+gen/
+
+# Buf specific
+.buf/ 

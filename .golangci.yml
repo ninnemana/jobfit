@@ -1,0 +1,53 @@
+run:
+  go: '1.21'
+  timeout: 5m
+  skip-dirs-use-default: true
+  skip-files:
+    - ".*\\.pb\\.go$"
+    - ".*\\.gen\\.go$"
+
+linters:
+  enable:
+    - gofmt
+    - govet
+    - gocyclo
+    - ineffassign
+    - misspell
+    - revive
+    - gosimple
+    - staticcheck
+    - typecheck
+    - unused
+    - gosec
+    - errcheck
+    - gocritic
+    - bodyclose
+    - dupl
+
+linters-settings:
+  gocyclo:
+    min-complexity: 15
+  dupl:
+    threshold: 100
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+  revive:
+    rules:
+      - name: exported
+        arguments:
+          - disableStutteringCheck
+
+issues:
+  exclude:
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - dupl
+    - path: gen/
+      linters:
+        - all
+  max-issues-per-linter: 0
+  max-same-issues: 0 
