@@ -1,0 +1,103 @@
+name: Docker Security
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+      - '**/*.md'
+
+permissions:
+  contents: read
+  security-events: write
+  id-token: write
+
+jobs:
+  docker-security:
+    name: Docker Security Scan
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Lint Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+          format: sarif
+          output-file: hadolint-results.sarif
+          no-fail: true
+
+      - name: Upload Hadolint scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: success() || failure()
+        with:
+          sarif_file: hadolint-results.sarif
+          category: hadolint
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          hide-progress: false
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: success() || failure()
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy
+
+      - name: Run Dockle
+        uses: erzz/dockle-action@v1
+        with:
+          image: jobfit:${{ github.sha }}
+          report-format: sarif
+          report-name: dockle-results
+          failure-threshold: FATAL
+        continue-on-error: true
+
+      - name: Upload Dockle scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: success() || failure()
+        with:
+          sarif_file: dockle-results.sarif
+          category: dockle
+
+      - name: Test Docker build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          load: true
+          tags: jobfit:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Generate summary
+        if: success() || failure()
+        run: |
+          {
+            echo "# Docker Security Scan Results :shield:"
+            echo ""
+            echo "## Hadolint Results"
+            echo "\`\`\`"
+            hadolint "Dockerfile" || true
+            echo "\`\`\`"
+            echo ""
+            echo "## Trivy Results"
+            echo "\`\`\`"
+            trivy config "." || true
+            echo "\`\`\`"
+            echo ""
+            echo "## Dockle Results"
+            echo "\`\`\`"
+            cat "dockle-results.sarif" || true
+            echo "\`\`\`"
+          } >> "$GITHUB_STEP_SUMMARY"

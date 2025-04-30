@@ -1,53 +1,139 @@
+version: "2"
 run:
-  go: '1.21'
-  timeout: 5m
-  skip-dirs-use-default: true
-  skip-files:
-    - ".*\\.pb\\.go$"
-    - ".*\\.gen\\.go$"
-
+  concurrency: 4
+  issues-exit-code: 1
+  tests: true
+output:
+  formats:
+    text:
+      path: stdout
+      print-linter-name: true
+      print-issued-lines: false
+  path-prefix: ""
 linters:
+  default: none
   enable:
-    - gofmt
-    - govet
-    - gocyclo
-    - ineffassign
-    - misspell
-    - revive
-    - gosimple
-    - staticcheck
-    - typecheck
-    - unused
-    - gosec
-    - errcheck
-    - gocritic
+    - asasalint
+    - asciicheck
+    - bidichk
     - bodyclose
+    - containedctx
+    - contextcheck
+    - copyloopvar
+    - cyclop
+    - decorder
+    - dogsled
     - dupl
-
-linters-settings:
-  gocyclo:
-    min-complexity: 15
-  dupl:
-    threshold: 100
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - style
-      - performance
-  revive:
+    - dupword
+    - durationcheck
+    - errcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - forbidigo
+    - forcetypeassert
+    - funlen
+    - gochecknoinits
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - goheader
+    - gomoddirectives
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    - govet
+    - grouper
+    - importas
+    - ineffassign
+    - interfacebloat
+    - lll
+    - loggercheck
+    - maintidx
+    - makezero
+    - misspell
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnil
+    - nlreturn
+    - noctx
+    - nolintlint
+    - nonamedreturns
+    - nosprintfhostport
+    - prealloc
+    - predeclared
+    - promlinter
+    - reassign
+    - revive
+    - staticcheck
+    - tagliatelle
+    - testableexamples
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    - whitespace
+    - wrapcheck
+    - wsl
+  settings:
+    funlen:
+      lines: 90
+      statements: 60
+    gocognit:
+      min-complexity: 20
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
     rules:
-      - name: exported
-        arguments:
-          - disableStutteringCheck
-
+      - linters:
+          - cyclop
+          - dupl
+          - funlen
+          - gocognit
+          - gosec
+          - govet
+          - maintidx
+          - nilnil
+          - scopelint
+        path: _test\.go
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
 issues:
-  exclude:
-    - path: _test\.go
-      linters:
-        - gocyclo
-        - dupl
-    - path: gen/
-      linters:
-        - all
   max-issues-per-linter: 0
-  max-same-issues: 0 
+  max-same-issues: 0
+  new: false
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+  settings:
+    gci:
+      sections:
+        - standard
+        - prefix(github.com/fubotv)
+        - default
+      custom-order: true
+    goimports:
+      local-prefixes:
+        - github.com/fubotv/
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+      - api/jobfit/v1/
+

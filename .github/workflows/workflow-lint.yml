@@ -1,0 +1,103 @@
+name: Workflow Lint
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  actionlint:
+    name: Lint GitHub Actions Workflows
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install actionlint
+        run: |
+          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          echo "$(pwd)/bin" >> "$GITHUB_PATH"
+
+      - name: Initialize summary
+        run: |
+          {
+            echo "# Workflow Lint Results :gear:"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run actionlint
+        id: actionlint
+        run: |
+          # Create a temporary file for the output
+          ACTIONLINT_OUTPUT="$(mktemp)"
+          
+          # Run actionlint and capture both stdout and stderr
+          if ! actionlint -color -format "{{range \$err := .}}::error file={{\$err.Filepath}},line={{\$err.Line}},col={{\$err.Column}}::{{\$err.Message}}%0A{{end}}" > "$ACTIONLINT_OUTPUT" 2>&1; then
+            echo "ACTIONLINT_FAILED=true" >> "$GITHUB_ENV"
+          fi
+          
+          # Add actionlint results to summary
+          {
+            echo "## Actionlint Results"
+            echo ""
+            if [ -s "$ACTIONLINT_OUTPUT" ]; then
+              echo ":x: Found issues:"
+              echo "\`\`\`"
+              cat "$ACTIONLINT_OUTPUT"
+              echo "\`\`\`"
+            else
+              echo ":white_check_mark: No issues found"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run yamllint
+        id: yamllint
+        continue-on-error: true
+        run: |
+          # Create a temporary file for the output
+          YAMLLINT_OUTPUT="$(mktemp)"
+          
+          # Run yamllint and capture the output
+          if ! yamllint -f parsable -c ".github/yamllint.yml" .github/workflows/*.yml > "$YAMLLINT_OUTPUT" 2>&1; then
+            echo "YAMLLINT_FAILED=true" >> "$GITHUB_ENV"
+          fi
+          
+          # Add yamllint results to summary
+          {
+            echo ""
+            echo "## YAML Lint Results"
+            echo ""
+            if [ -s "$YAMLLINT_OUTPUT" ]; then
+              echo ":x: Found issues:"
+              echo "\`\`\`"
+              cat "$YAMLLINT_OUTPUT"
+              echo "\`\`\`"
+            else
+              echo ":white_check_mark: No issues found"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check for errors
+        if: env.ACTIONLINT_FAILED == 'true' || env.YAMLLINT_FAILED == 'true'
+        run: |
+          echo "::error::Workflow files contain linting errors. Please check the job summary for details."
+          exit 1
+
+      - name: Create PR comment
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync(process.env.GITHUB_STEP_SUMMARY, 'utf8');
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: summary
+            }); 

@@ -1,0 +1,113 @@
+name: Go
+
+on:
+  pull_request:
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Code Generation
+        run: |
+          go generate ./...
+          go mod tidy
+          go mod download
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.1.5
+          args: --timeout=5m
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Run tests
+        run: |
+          {
+            echo "# Go Test Results :test_tube:"
+            echo ""
+            echo "## Test Output"
+            echo "\`\`\`"
+            go test -v -race -coverprofile="coverage.txt" -covermode=atomic ./...
+            echo "\`\`\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage to Coveralls
+        uses: shogo82148/actions-goveralls@v1
+        with:
+          path-to-profile: coverage.txt
+
+  security:
+    name: Security
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Run Gosec Security Scanner
+        run: |
+          {
+            echo "# Go Security Scan Results :shield:"
+            echo ""
+            echo "## Gosec Output"
+            echo "\`\`\`"
+            go install github.com/securego/gosec/v2/cmd/gosec@latest
+            gosec -no-fail -fmt=text -out=gosec-results.txt ./...
+            cat "gosec-results.txt"
+            echo "\`\`\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Build
+        run: |
+          {
+            echo "# Go Build Results :hammer_and_wrench:"
+            echo ""
+            echo "## Build Output"
+            echo "\`\`\`"
+            go build -v ./...
+            go vet ./...
+            echo "\`\`\`"
+            echo ""
+            echo "## Dependencies"
+            echo "\`\`\`"
+            go list -m all
+            echo "\`\`\`"
+          } >> "$GITHUB_STEP_SUMMARY" 

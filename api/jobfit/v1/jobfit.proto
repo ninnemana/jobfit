@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package api.jobfit.v1;
+option go_package = "github.com/ninnemana/jobfit/api/jobfit/v1;jobfitv1";
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+// import "connect/go/connect.proto";
+
+// option (connect.go.build_transport) = true;
+// option (connect.go.package_name) = "jobfitv1";
+
+service Service {
+    rpc Match(MatchRequest) returns (MatchResponse) {
+        option (google.api.http) = {
+            post: "/v1/match"
+            body: "*"
+        };
+    }
+}
+
+message MatchRequest {
+    string user_id = 1;
+    Job job = 2;
+    repeated Resume resumes = 3;
+}
+
+message MatchResponse {
+    string user_id = 1;
+    Job job = 2;
+    repeated Resume resumes = 3;
+    repeated MatchResult results = 4;
+}
+
+message MatchResult {
+    ParsedResume resume = 1;
+    double score = 2;
+}
+
+message Job {
+    string blob = 1;
+    string uri = 2;
+}
+
+message ParsedResume {
+    string blob = 1;
+    ResumeType type = 2;
+    google.protobuf.Timestamp parsed_at = 3;
+    ParsedResult result = 4;
+    LLMModelType parsed_by = 5;
+}
+
+enum LLMModelType {
+    LLM_MODEL_TYPE_UNSPECIFIED = 0;
+    LLM_MODEL_TYPE_GPT_3 = 1;
+    LLM_MODEL_TYPE_GPT_4 = 2;
+    LLM_MODEL_TYPE_CLAUDE = 3;
+    LLM_MODEL_TYPE_GEMINI = 4;
+}
+
+message ParsedResult {
+    string content = 1;
+    map<string, string> metadata = 2;
+}
+
+message Resume {
+    string blob = 1;
+    string uri = 2;
+    optional ResumeType type = 3;
+}
+
+enum ResumeType {
+    RESUME_TYPE_UNSPECIFIED = 0;
+    RESUME_TYPE_PDF = 1;
+    RESUME_TYPE_TEXT = 2;
+}

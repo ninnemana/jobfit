@@ -43,7 +43,7 @@ debug/
 terraform.rc
 
 # Generated code (will be regenerated in container)
-gen/
+api/jobfit/v1/**/*.go
 
 # Buf specific
 .buf/ 
