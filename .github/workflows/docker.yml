@@ -108,7 +108,7 @@ jobs:
         with:
           image: jobfit:${{ github.sha }}
           report-format: sarif
-          report-name: dockle-results.sarif
+          report-name: dockle
           failure-threshold: FATAL
         continue-on-error: true
 
@@ -116,5 +116,5 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
-          sarif_file: dockle-results.sarif
+          sarif_file: dockle.sarif
           category: dockle
