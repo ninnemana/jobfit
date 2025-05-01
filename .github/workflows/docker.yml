@@ -12,8 +12,8 @@ permissions:
   id-token: write
 
 jobs:
-  docker-security:
-    name: Docker Security Scan
+  hadolint:
+    name: Hadolint
     if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
@@ -33,10 +33,21 @@ jobs:
 
       - name: Upload Hadolint scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
-        if: success() || failure()
+        if: always()
         with:
           sarif_file: hadolint-results.sarif
           category: hadolint
+
+  trivy:
+    name: Trivy
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
@@ -49,28 +60,48 @@ jobs:
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
-        if: success() || failure()
+        if: always()
         with:
           sarif_file: trivy-results.sarif
           category: trivy
+
+  dockle:
+    name: Dockle
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Run Dockle
         uses: erzz/dockle-action@v1
         with:
           image: jobfit:${{ github.sha }}
           report-format: sarif
-          report-name: dockle-results
+          report-name: dockle-results.sarif
           failure-threshold: FATAL
         continue-on-error: true
 
       - name: Upload Dockle scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
-        if: success() || failure()
+        if: always()
         with:
           sarif_file: dockle-results.sarif
           category: dockle
 
+  build:
+    name: Build
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Test Docker build
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -81,23 +112,17 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Generate summary
-        if: success() || failure()
+        if: always()
         run: |
           {
-            echo "# Docker Security Scan Results :shield:"
+            echo "## Build Results"
+            echo "<details>"
+            echo "<summary>Image ID: ${{ steps.build.outputs.imageid }}</summary>"
             echo ""
-            echo "## Hadolint Results"
-            echo "\`\`\`"
-            hadolint "Dockerfile" || true
-            echo "\`\`\`"
+            echo "Digest: ${{ steps.build.outputs.digest }}"
             echo ""
-            echo "## Trivy Results"
+            echo "\`\`\`json"
+            echo "${{ steps.build.outputs.metadata }}"
             echo "\`\`\`"
-            trivy config "." || true
-            echo "\`\`\`"
-            echo ""
-            echo "## Dockle Results"
-            echo "\`\`\`"
-            cat "dockle-results.sarif" || true
-            echo "\`\`\`"
+            echo "</details>"
           } >> "$GITHUB_STEP_SUMMARY"
