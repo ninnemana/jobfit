@@ -1,14 +1,14 @@
 version: v2
-name: buf.build/ninnemana/jobfit
+modules:
+  - path: .
 deps:
   - buf.build/googleapis/googleapis
-  # - buf.build/connectrpc/go
 breaking:
   use:
     - FILE
 lint:
   use:
-    - DEFAULT
+    - STANDARD
   except:
     - PACKAGE_VERSION_SUFFIX
     - SERVICE_SUFFIX
