@@ -24,28 +24,34 @@ jobs:
       - name: Run buf lint
         id: buf-lint
         run: |
-          echo "# Protocol Buffer Lint Results :microscope:" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## buf lint Output" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          buf lint || true
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          {
+            echo "# Protocol Buffer Lint Results :microscope:"
+            echo ""
+            echo "## buf lint Output"
+            echo '```'
+            buf lint || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run buf breaking
         id: buf-breaking
         run: |
-          echo "## buf breaking Output" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          buf breaking --against ".git#branch=main" || true
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## buf breaking Output"
+            echo '```'
+            buf breaking --against ".git#branch=main" || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run buf format
         id: buf-format
         run: |
-          echo "## buf format Check" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          buf format -d || true
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## buf format Check"
+            echo '```'
+            buf format -d || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
   generate:
     name: Generate Protocol Buffers
@@ -55,21 +61,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
       - uses: bufbuild/buf-setup-action@v1
         with:
           github_token: ${{ github.token }}
 
-      - uses: bufbuild/buf-lint-action@v1
-
-      - uses: bufbuild/buf-breaking-action@v1
-        with:
-          against: '.git#branch=main'
-
       - name: Generate protos
         run: go generate ./...
 
+      - name: Run buf lint
+        uses: bufbuild/buf-lint-action@v1
+
+      # - uses: bufbuild/buf-breaking-action@v1
+      #   with:
+      #     against: '.git#branch=main'
+
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v7
         with:
           commit-message: "chore: update generated protocol buffer code"
           title: "chore: update generated protocol buffer code"

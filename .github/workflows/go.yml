@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -27,6 +27,7 @@ jobs:
         with:
           version: v2.1.5
           args: --timeout=5m
+
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -110,4 +111,4 @@ jobs:
             echo "\`\`\`"
             go list -m all
             echo "\`\`\`"
-          } >> "$GITHUB_STEP_SUMMARY" 
+          } >> "$GITHUB_STEP_SUMMARY"

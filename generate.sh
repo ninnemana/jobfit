@@ -19,6 +19,8 @@ if ! command -v protoc-gen-go-grpc >/dev/null 2>&1; then
   go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 fi
 
+buf dep update
+
 # Run buf generate
 echo "Running buf generate..."
 buf generate 
