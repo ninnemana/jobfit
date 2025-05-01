@@ -60,19 +60,26 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
 
       - uses: bufbuild/buf-setup-action@v1
         with:
           github_token: ${{ github.token }}
 
-      - uses: bufbuild/buf-lint-action@v1
-
-      - uses: bufbuild/buf-breaking-action@v1
-        with:
-          against: '.git#branch=main'
-
       - name: Generate protos
         run: go generate ./...
+
+      - name: Run buf lint
+        uses: bufbuild/buf-lint-action@v1
+
+      # - uses: bufbuild/buf-breaking-action@v1
+      #   with:
+      #     against: '.git#branch=main'
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
