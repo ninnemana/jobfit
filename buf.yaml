@@ -11,4 +11,4 @@ lint:
     - DEFAULT
   except:
     - PACKAGE_VERSION_SUFFIX
-    - SERVICE_SUFFIX 
+    - SERVICE_SUFFIX

@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -110,4 +110,4 @@ jobs:
             echo "\`\`\`"
             go list -m all
             echo "\`\`\`"
-          } >> "$GITHUB_STEP_SUMMARY" 
+          } >> "$GITHUB_STEP_SUMMARY"

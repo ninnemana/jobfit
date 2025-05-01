@@ -17,11 +17,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install actionlint
-        run: |
-          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
-          echo "$(pwd)/bin" >> "$GITHUB_PATH"
-
       - name: Initialize summary
         run: |
           {
@@ -31,15 +26,18 @@ jobs:
 
       - name: Run actionlint
         id: actionlint
+        shell: bash
         run: |
           # Create a temporary file for the output
           ACTIONLINT_OUTPUT="$(mktemp)"
-          
+
+          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+
           # Run actionlint and capture both stdout and stderr
-          if ! actionlint -color -format "{{range \$err := .}}::error file={{\$err.Filepath}},line={{\$err.Line}},col={{\$err.Column}}::{{\$err.Message}}%0A{{end}}" > "$ACTIONLINT_OUTPUT" 2>&1; then
+          if ! ./actionlint -color > "$ACTIONLINT_OUTPUT" 2>&1; then
             echo "ACTIONLINT_FAILED=true" >> "$GITHUB_ENV"
           fi
-          
+
           # Add actionlint results to summary
           {
             echo "## Actionlint Results"
@@ -60,12 +58,12 @@ jobs:
         run: |
           # Create a temporary file for the output
           YAMLLINT_OUTPUT="$(mktemp)"
-          
+
           # Run yamllint and capture the output
           if ! yamllint -f parsable -c ".github/yamllint.yml" .github/workflows/*.yml > "$YAMLLINT_OUTPUT" 2>&1; then
             echo "YAMLLINT_FAILED=true" >> "$GITHUB_ENV"
           fi
-          
+
           # Add yamllint results to summary
           {
             echo ""
@@ -97,4 +95,4 @@ jobs:
               repo: context.repo.repo,
               issue_number: context.issue.number,
               body: process.env.GITHUB_STEP_SUMMARY
-            }); 
+            });

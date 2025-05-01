@@ -136,4 +136,3 @@ formatters:
       - builtin$
       - examples$
       - api/jobfit/v1/
-
