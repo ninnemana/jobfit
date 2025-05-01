@@ -22,13 +22,13 @@ RUN go mod download
 COPY . .
 
 # Generate protobuf code
-RUN buf generate
+RUN go generate ./...
 
 # Build the application
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /app/jobfit
 
 # Final stage
-FROM gcr.io/distroless/static-debian12
+FROM gcr.io/distroless/static-debian12:38005a5a303edb04eed33167524f55fbdfafe8b9
 
 WORKDIR /app
 
