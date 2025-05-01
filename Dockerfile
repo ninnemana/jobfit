@@ -28,7 +28,7 @@ RUN buf generate
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /app/jobfit
 
 # Final stage
-FROM gcr.io/distroless/static-debian12:nonroot@sha256:<specific-sha>
+FROM gcr.io/distroless/static-debian12
 
 WORKDIR /app
 
