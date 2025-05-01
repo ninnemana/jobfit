@@ -65,30 +65,6 @@ jobs:
           sarif_file: trivy-results.sarif
           category: trivy
 
-  dockle:
-    name: Dockle
-    if: github.actor != 'dependabot[bot]'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run Dockle
-        uses: erzz/dockle-action@v1
-        with:
-          image: jobfit:${{ github.sha }}
-          report-format: sarif
-          report-name: dockle-results.sarif
-          failure-threshold: FATAL
-        continue-on-error: true
-
-      - name: Upload Dockle scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: dockle-results.sarif
-          category: dockle
-
   build:
     name: Build
     if: github.actor != 'dependabot[bot]'
@@ -126,3 +102,28 @@ jobs:
             echo "\`\`\`"
             echo "</details>"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  dockle:
+    name: Dockle
+    if: github.actor != 'dependabot[bot]'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Dockle
+        uses: erzz/dockle-action@v1
+        with:
+          image: jobfit:${{ github.sha }}
+          report-format: sarif
+          report-name: dockle-results.sarif
+          failure-threshold: FATAL
+        continue-on-error: true
+
+      - name: Upload Dockle scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: dockle-results.sarif
+          category: dockle
